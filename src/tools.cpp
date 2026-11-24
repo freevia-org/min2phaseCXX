@@ -284,6 +284,7 @@ namespace min2phase { namespace tools {
         min2phase::init();
 
         tests::testInput();
+        tests::testPruningTablePacking();
         tests::testSearchError();
         tests::testSearch();
     }

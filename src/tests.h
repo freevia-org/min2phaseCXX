@@ -14,6 +14,9 @@
 
 namespace min2phase{ namespace tests{
 
+    /** Tests packed pruning-table bit operations at high-bit boundaries. */
+    void testPruningTablePacking();
+
     /**
      * Tests the errors of a malformed input.
      */
