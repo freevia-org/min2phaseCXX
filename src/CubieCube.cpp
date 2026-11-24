@@ -94,6 +94,11 @@ namespace min2phase {
         uint16_t mask = 0;
 
         for (i = 0; i < info::NUMBER_EDGES; i++) {
+            // Edge permutation/orientation is encoded as [0, 23]. Validate
+            // public mutable data before using the permutation as a shift count.
+            if (edges[i] < 0 || edges[i] >= info::NUMBER_EDGES * 2)
+                return info::MISSING_EDGE;
+
             mask |= 1 << (edges[i] >> 1);
             sum ^= edges[i] & 1;
         }
@@ -108,6 +113,10 @@ namespace min2phase {
         sum = 0;
 
         for (i = 0; i < info::NUMBER_CORNER; i++) {
+            // Corner permutation/orientation is encoded as [0, 23].
+            if (corners[i] < 0 || corners[i] >= info::NUMBER_CORNER * info::CORNE_ORI_CASES)
+                return info::MISSING_CORNER;
+
             mask |= 1 << (corners[i] & (info::NUMBER_CORNER - 1));
             sum += corners[i] >> info::CORNE_ORI_CASES;
         }
@@ -270,6 +279,26 @@ namespace min2phase {
 
     //get permutation
     int32_t CubieCube::getNPerm(const int8_t arr[], uint8_t n, bool isEdge) {
+        // This helper is used by the public coordinate getters as well as
+        // check(). Protect every caller because the cubie arrays are public.
+        const uint8_t maxCount = isEdge ? info::NUMBER_EDGES : info::NUMBER_CORNER;
+        if (arr == nullptr || n == 0 || n > maxCount)
+            return -1;
+
+        const int8_t maxValue = isEdge
+            ? info::NUMBER_EDGES * 2
+            : info::NUMBER_CORNER * info::CORNE_ORI_CASES;
+        uint16_t seen = 0;
+        for (uint8_t j = 0; j < n; j++) {
+            if (arr[j] < 0 || arr[j] >= maxValue)
+                return -1;
+
+            const int8_t value = getVal(arr[j], isEdge);
+            if (value >= n || (seen & (uint16_t(1) << value)) != 0)
+                return -1;
+            seen |= uint16_t(1) << value;
+        }
+
         uint8_t i, v;
         int32_t idx = 0;
         uint64_t val = 0xFEDCBA9876543210L;
@@ -277,7 +306,9 @@ namespace min2phase {
         for (i = 0; i < n - 1; i++) {
             v = getVal(arr[i], isEdge) << 2;
             idx = (n - i) * idx + (val >> v & 0xf);
-            val -= 0x1111111111111110L << v;
+            // Use an unsigned base: valid high-nibble shifts may overflow a
+            // signed 64-bit value, while uint64_t wraparound is well-defined.
+            val -= uint64_t(0x1111111111111110ULL) << v;
         }
 
         return idx;
@@ -416,7 +447,10 @@ namespace min2phase {
 
     //get corner permutation symmetry
     uint16_t CubieCube::getCPermSym() const {
-        return coords::ESym2CSym(coords::coords.EPermR2S[getCPerm()]);
+        const uint16_t perm = getCPerm();
+        if (perm == static_cast<uint16_t>(-1))
+            return perm;
+        return coords::ESym2CSym(coords::coords.EPermR2S[perm]);
     }
 
     //get edge permutation
@@ -431,7 +465,10 @@ namespace min2phase {
 
     //get edge permutation symmetry
     uint16_t CubieCube::getEPermSym() const {
-        return coords::coords.EPermR2S[getEPerm()];
+        const uint16_t perm = getEPerm();
+        if (perm == static_cast<uint16_t>(-1))
+            return perm;
+        return coords::coords.EPermR2S[perm];
     }
 
     //get udslicesorted permutation

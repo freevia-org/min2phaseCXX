@@ -284,6 +284,7 @@ namespace min2phase { namespace tools {
         min2phase::init();
 
         tests::testInput();
+        tests::testMalformedCubieValues();
         tests::testSearchError();
         tests::testSearch();
     }

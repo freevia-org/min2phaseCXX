@@ -9,6 +9,7 @@
 #include <min2phase/tools.h>
 #include <iostream>
 #include <min2phase/min2phase.h>
+#include "CubieCube.h"
 #include "info.h"
 #include "tests.h"
 #include "Search.h"
@@ -32,6 +33,49 @@ namespace min2phase{ namespace tests{
 
         for(uint8_t i = 0; i < N_CUBE_TESTS; i++)
             assert(tools::verify(tools::randomCube()) == info::NO_ERROR);
+    }
+
+    // Public cubie arrays can be mutated directly. Invalid encoded values
+    // must be rejected before check() uses them in shift expressions.
+    void testMalformedCubieValues(){
+        CubieCube cube;
+
+        cube.edges[0] = -1;
+        assert(cube.check() == info::MISSING_EDGE);
+        assert(cube.getEPerm() == UINT16_MAX);
+        assert(cube.getEPermSym() == UINT16_MAX);
+
+        cube = CubieCube();
+        cube.edges[0] = info::NUMBER_EDGES * 2;
+        assert(cube.check() == info::MISSING_EDGE);
+
+        cube = CubieCube();
+        cube.corners[0] = -1;
+        assert(cube.check() == info::MISSING_CORNER);
+        assert(cube.getCPerm() == UINT16_MAX);
+        assert(cube.getCPermSym() == UINT16_MAX);
+
+        cube = CubieCube();
+        for (uint8_t i = 0; i < info::NUMBER_CORNER; ++i)
+            cube.corners[i] = 0;
+        assert(cube.getCPerm() == UINT16_MAX);
+        assert(cube.getCPermSym() == UINT16_MAX);
+
+        cube = CubieCube();
+        for (uint8_t i = 0; i < info::NUMBER_EDGES; ++i)
+            cube.edges[i] = 23;
+        assert(cube.getEPerm() == UINT16_MAX);
+        assert(cube.getEPermSym() == UINT16_MAX);
+        assert(cube.getMPerm() == -1);
+
+        cube = CubieCube();
+        cube.corners[0] = info::NUMBER_CORNER * info::CORNE_ORI_CASES;
+        assert(cube.check() == info::MISSING_CORNER);
+
+        cube = CubieCube();
+        assert(cube.check() == info::NO_ERROR);
+        assert(cube.getCPerm() == 0);
+        assert(cube.getEPerm() == 0);
     }
 
     //test search errors

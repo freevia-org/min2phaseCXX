@@ -19,6 +19,9 @@ namespace min2phase{ namespace tests{
      */
     void testInput();
 
+    /** Tests malformed public cubie values and shift safety. */
+    void testMalformedCubieValues();
+
     /**
      * Tests the errors of a malformed search.
      */

@@ -135,7 +135,9 @@ int8_t min2phase::Search::phase1PreMoves(int8_t maxl, int8_t lm, CubieCube* cc, 
     int8_t m, ret;
     int32_t skipMoves;
 
-    const int32_t VAL = 0x36FB7;
+    // The look-ahead mask is also queried at bit positions 32 and above.
+    // Keep it wide enough for those shifts to be defined.
+    const int64_t VAL = 0x36FB7;
 
 #if MIN2PHASE_DEBUG > 1
     MIN2PHASE_OUTPUT("Phase 1 pre moves.")

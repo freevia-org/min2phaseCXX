@@ -297,7 +297,8 @@ namespace min2phase {
          * This method is used to get the corner permutation from the object.
          * The range of this coordinate is [0, 40320).
          *
-         * @return : the corner permutation orientation
+         * @return : the corner permutation coordinate, or UINT16_MAX if the
+         *           public corner array does not contain a valid permutation.
          */
         uint16_t getCPerm() const;
 
@@ -313,16 +314,19 @@ namespace min2phase {
          * This method is used to get the symmetry of corner permutation.
          * The range of this symmetry is [0, 2187 * 16).
          *
-         * @return : the symmetry of the corner permutation.
+         * @return : the symmetry of the corner permutation, or UINT16_MAX if
+         *           the public corner array does not contain a valid permutation.
          */
         uint16_t getCPermSym() const;
 
 
         /**
          * This method is used to get the edge permutation from the object.
-         * The range of this coordinate is [0, 40320).
+         * The first eight edges must form a permutation of values [0, 8), as
+         * required for the phase-2 edge coordinate. The range is [0, 40320).
          *
-         * @return : the edge permutation orientation
+         * @return : the edge permutation coordinate, or UINT16_MAX if the
+         *           public edge array is outside this coordinate's domain.
          */
         uint16_t getEPerm() const;
 
@@ -339,7 +343,8 @@ namespace min2phase {
          * from the object.
          * The range of this symmetry is [0, 2187 * 16).
          *
-         * @return : the symmetry of the edge permutation.
+         * @return : the symmetry of the edge permutation, or UINT16_MAX if
+         *           the public edge array is outside this coordinate's domain.
          */
         uint16_t getEPermSym() const;
 
@@ -349,7 +354,8 @@ namespace min2phase {
          * middle slice from the object.
          * The range og this coordinate is [0, 24).
          *
-         * @return : the 4 edge in the middle slice coordinate.
+         * @return : the 4 edge in the middle slice coordinate, or -1 if the
+         *           public edge array does not contain a valid permutation.
          */
         int8_t getMPerm() const;
 
