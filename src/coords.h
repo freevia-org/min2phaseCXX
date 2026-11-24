@@ -329,6 +329,12 @@ namespace min2phase { namespace coords {
      */
     int8_t getPruning(const int32_t table[], int32_t index);
 
+    /** Increment a packed pruning word without signed overflow. */
+    uint32_t advancePruningWord(uint32_t packed, uint32_t mask);
+
+    /** Test whether a packed pruning word contains a zero nibble. */
+    bool hasZero(uint32_t val);
+
     /**
      * In this class are stored the coordinates and info used to
      * identify every cube.

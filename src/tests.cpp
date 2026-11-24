@@ -12,6 +12,7 @@
 #include "info.h"
 #include "tests.h"
 #include "Search.h"
+#include "coords.h"
 
 namespace min2phase{ namespace tests{
     const uint8_t N_CUBE_TESTS = 255;
@@ -32,6 +33,23 @@ namespace min2phase{ namespace tests{
 
         for(uint8_t i = 0; i < N_CUBE_TESTS; i++)
             assert(tools::verify(tools::randomCube()) == info::NO_ERROR);
+    }
+
+    void testPruningTablePacking(){
+        int32_t table[1] = {0};
+
+        for(int32_t index = 0; index < 8; index++)
+            coords::setPruning(table, index, 15);
+
+        assert(static_cast<uint32_t>(table[0]) == 0xffffffffU);
+        for(int32_t index = 0; index < 8; index++)
+            assert(coords::getPruning(table, index) == 15);
+
+        // This is the exact high-bit transition that previously overflowed
+        // signed int while initializing the packed pruning table.
+        assert(coords::advancePruningWord(0x77777777U, 0x88888888U) == 0x88888888U);
+        assert(!coords::hasZero(0x88888888U));
+        assert(coords::hasZero(0x88888880U));
     }
 
     //test search errors

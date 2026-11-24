@@ -6,6 +6,7 @@
  */
 
 #include <min2phase/min2phase.h>
+#include <cstring>
 #include "coords.h"
 
 namespace min2phase { namespace coords {
@@ -167,7 +168,7 @@ namespace min2phase { namespace coords {
      * @param val : the pruning value to check.
      * @return    : true if has 0, false if not.
      */
-    bool hasZero(int32_t val);
+    bool hasZero(uint32_t val);
 
     coords_t coords;
 
@@ -257,16 +258,26 @@ namespace min2phase { namespace coords {
 
     //set value in pruning table
     void setPruning(int32_t table[], int32_t index, int8_t value) {
-        table[index >> 3] ^= value << ((index << 2)%(sizeof(int32_t)*8)); // index << 2 <=> (index & 7) << 2
+        const uint32_t shift = static_cast<uint32_t>(index & 7) << 2;
+        uint32_t packed = static_cast<uint32_t>(table[index >> 3]);
+        packed ^= static_cast<uint32_t>(value) << shift;
+        std::memcpy(&table[index >> 3], &packed, sizeof(packed));
     }
 
     //get value in pruning table
     int8_t getPruning(const int32_t table[], int32_t index) {
-        return table[index >> 3] >> ((index << 2)%(sizeof(int32_t)*8)) & 0xf; // index << 2 <=> (index & 7) << 2
+        const uint32_t shift = static_cast<uint32_t>(index & 7) << 2;
+        return static_cast<int8_t>((static_cast<uint32_t>(table[index >> 3]) >> shift) & 0xfU);
     }
 
-    bool hasZero(int32_t val) {
-        return ((val - 0x11111111) & ~val & 0x88888888) != 0;
+    uint32_t advancePruningWord(uint32_t packed, uint32_t mask) {
+        uint32_t val = packed ^ mask;
+        val &= val >> 1;
+        return packed + (val & (val >> 2) & 0x11111111U);
+    }
+
+    bool hasZero(uint32_t val) {
+        return ((val - 0x11111111U) & ~val & 0x88888888U) != 0;
     }
 
     //init basic 18 moves
@@ -666,7 +677,8 @@ namespace min2phase { namespace coords {
         const int8_t N_MOVES = IS_PHASE2 ? info::N_MOVES2 : info::N_MOVES;
         const int32_t NEXT_AXIS_MAGIC = IS_PHASE2 ? 0x42 : 0x92492;
 
-        int32_t mask, val, selArrMask, idx, idxx, i, m, done;
+        uint32_t mask, val, selArrMask;
+        int32_t idx, idxx, i, m, done;
         int8_t check, xorVal, select, fsym, depth, prun;
         uint16_t flip, rawx, symx, symState;
         int16_t raw, symmetry;
@@ -683,17 +695,16 @@ namespace min2phase { namespace coords {
         done = 1;
 
         while (depth < MAX_DEPTH) {
-            mask = (depth + 1) * 0x11111111 ^ 0xffffffff;
+            mask = static_cast<uint32_t>(depth + 1) * 0x11111111U ^ 0xffffffffU;
 
             for (i = 0; i < PrunTableSize; i++) {
-                val = PrunTable[i] ^ mask;
-                val &= val >> 1;
-                PrunTable[i] += val & (val >> 2) & 0x11111111;
+                val = advancePruningWord(static_cast<uint32_t>(PrunTable[i]), mask);
+                std::memcpy(&PrunTable[i], &val, sizeof(val));
             }
 
             inv = depth > INV_DEPTH;
             select = inv ? (depth + 2) : depth;
-            selArrMask = select * 0x11111111;
+            selArrMask = static_cast<uint32_t>(select) * 0x11111111U;
             check = inv ? depth : (depth + 2);
             depth++;
             xorVal = depth ^ (depth + 1);
@@ -701,7 +712,7 @@ namespace min2phase { namespace coords {
 
             for (i = 0; i < N_SIZE; i++, val >>= 4) {
                 if ((i & 7) == 0) {
-                    val = PrunTable[i >> 3];
+                    val = static_cast<uint32_t>(PrunTable[i >> 3]);
 
                     if (!hasZero(val ^ selArrMask)) {
                         i += 7;
